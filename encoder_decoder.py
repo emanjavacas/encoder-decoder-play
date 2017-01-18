@@ -4,7 +4,6 @@ import numpy as np
 import dynet as dy
 
 import utils as u
-from hinton_diagram import hinton
 from rnn import SimpleRNNNetwork
 
 
@@ -212,6 +211,7 @@ class AttentionNetwork(EncoderDecoderNetwork):
             idx, train_loss, val_set, target, **kwargs)
         if plot:
             import matplotlib.pyplot as plt
+            from hinton_diagram import hinton
             pred = self.generate(target, store_weights=True)
             fig = hinton(self.get_attention_matrix(),
                          xlabels=list(target),
