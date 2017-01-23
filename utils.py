@@ -2,6 +2,7 @@
 import dynet as dy
 
 EOS = '<EOS>'
+LOG_MSG = '[%d][%d]: tr. loss [%3f], dev loss [%3f]'
 
 
 # generator functions

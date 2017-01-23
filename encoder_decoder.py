@@ -148,10 +148,10 @@ class AttentionNetwork(EncoderDecoderNetwork):
         context = enc_h_ts_mat * weights
         return context
 
-    def log_checkpoint(self, idx, train_loss, val_set, target,
-                       prefix='attention', plot=True, **kwargs):
-        super(AttentionNetwork, self).log_checkpoint(
-            idx, train_loss, val_set, target, **kwargs)
+    def checkpoint(self, e, idx, tr_loss, val_loss, target='abcd', trans=True,
+                   prefix='attention', plot=True):
+        super(AttentionNetwork, self) \
+            .checkpoint(e, idx, tr_loss, val_loss, target=target, trans=trans)
         if plot:
             import matplotlib.pyplot as plt
             from hinton_diagram import hinton
@@ -216,6 +216,11 @@ class AttentionNetwork(EncoderDecoderNetwork):
             # encoded seq (output of encoder) and ev. last input encoding
             new_state = self.recur(s, enc_mat, last_char_emb, encatt, **kwargs)
             s = s.add_input(new_state)
+            # TODO: according to Bahdanau 2015, the new state is computed with
+            # deep output + single maxout:
+            # p(y_i | s_i, y_{i-1}, c_i) \prop exp(y_i^T * W_o * t_i)
+            # where $t_i = [max(t^~_{i, 2j-1}, t^~_{i, 2j})]^T_{j=1,...,l}$
+            # and $t^~_i = U_o * s_{i-1} + V_o * Ey_{i-1} * C_o * c_i$
             yield self._output_softmax(s.output())
             last_char = yield
             last_char_emb = self.lookup[last_char]

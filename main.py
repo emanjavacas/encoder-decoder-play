@@ -88,31 +88,24 @@ if __name__ == '__main__':
 
     if args.model == 'SimpleRNNNetwork':
         rnn = SimpleRNNNetwork(DEPTH, EMB_DIM, HID_DIM, char2int, int2char)
-
     elif args.model == 'BiRNNNetwork':
         rnn = BiRNNNetwork(DEPTH, EMB_DIM, HID_DIM, char2int, int2char)
-
     elif args.model == 'EncoderDecoderNetwork':
-        rnn = EncoderDecoderNetwork((DEPTH, DEPTH),
-                                    EMB_DIM, (HID_DIM, HID_DIM),
-                                    char2int, int2char)
-
+        rnn = EncoderDecoderNetwork(
+            (DEPTH, DEPTH), EMB_DIM, (HID_DIM, HID_DIM), char2int, int2char)
     elif args.model == 'AttentionNetwork':
-        rnn = AttentionNetwork((DEPTH, DEPTH), EMB_DIM,
-                               (HID_DIM, HID_DIM), ATT_DIM,
-                               char2int, int2char)
-
+        rnn = AttentionNetwork(
+            (DEPTH, DEPTH), EMB_DIM, (HID_DIM, HID_DIM), ATT_DIM, char2int, int2char)
     else:
         raise ValueError('non existing model [%s]' % args.model)
 
     try:
-        rnn.train(train_set,
-                  val_set,
-                  epochs=EPOCHS,
-                  target=args.target,
-                  prefix=args.prefix,
+        rnn.train(train_set, val_set, epochs=EPOCHS, trainer='AdadeltaTrainer',
                   checkpoint=args.checkpoint,
-                  plot=args.plot)
+                  checkpoint_kwargs={'target': args.target,
+                                     'prefix': args.prefix,
+                                     'plot': args.plot},
+                  edecay=0.001)
 
     except KeyboardInterrupt:
         pass
