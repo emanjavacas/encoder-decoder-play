@@ -37,16 +37,7 @@ def preprocess_seq(string, char2int):
 
 
 def run_rnn(input_vecs, init_state):
-    s = init_state
-    output = []
-    for vec in input_vecs:
-        s = s.add_input(vec)
-        output.append(s.output())
-    return output
-
-
-def weighted_sum(weights, input_vecs):
-    return dy.esum([vec * w for w, vec in zip(weights, input_vecs)])
+    return [s.output() for s in init_state.add_inputs(input_vecs)]
 
 
 def log_loss(out_probs, true_target):

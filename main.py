@@ -4,7 +4,7 @@ import utils as u
 from rnn import SimpleRNNNetwork, BiRNNNetwork
 from encoder_decoder import EncoderDecoderNetwork, AttentionNetwork
 
-# if True:
+
 if __name__ == '__main__':
 
     import random

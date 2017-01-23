@@ -121,10 +121,6 @@ class AttentionNetwork(EncoderDecoderNetwork):
     def reset_attention_matrix(self):
         self.current_weights = []
 
-    def encode(self, embedded):
-        # return full encoded sequence
-        return u.run_rnn(embedded, self.enc_rnn.initial_state())
-
     def attend(self, enc_h_ts_mat, dec_h_t, encatt, store_weights=False):
         """
         Parameters:
@@ -151,6 +147,24 @@ class AttentionNetwork(EncoderDecoderNetwork):
             self.current_weights.append(weights.value())
         context = enc_h_ts_mat * weights
         return context
+
+    def log_checkpoint(self, idx, train_loss, val_set, target,
+                       prefix='attention', plot=True, **kwargs):
+        super(AttentionNetwork, self).log_checkpoint(
+            idx, train_loss, val_set, target, **kwargs)
+        if plot:
+            import matplotlib.pyplot as plt
+            from hinton_diagram import hinton
+            pred = self.generate(target, store_weights=True)
+            fig = hinton(self.get_attention_matrix(),
+                         xlabels=list(target),
+                         ylabels=list(pred.replace(u.EOS, '')))
+            plt.savefig('./imgs/%s-%d.png' % (prefix, idx))
+            plt.close(fig)
+
+    def encode(self, embedded):
+        # return full encoded sequence
+        return u.run_rnn(embedded, self.enc_rnn.initial_state())
 
     def recur(self, s, enc_mat, last_char_emb, encatt, store_weights=False):
         """compute input to next state given the current decoder state, the encoded seq
@@ -181,7 +195,6 @@ class AttentionNetwork(EncoderDecoderNetwork):
         the generation of the next symbol.
         See self.generate and self.
         """
-        state_vec = dy.vecInput(self.enc_hid_dim)
         embedded = self._embed_seq(in_seq)
         enc_mat = dy.concatenate_cols(self.encode(embedded))
         # variables to compute and cache the encoder projection onto att space
@@ -189,6 +202,8 @@ class AttentionNetwork(EncoderDecoderNetwork):
         encatt = None
         # EOS as zero-vector for 1st step
         last_char_emb = self.lookup[self.char2int[u.EOS]]
+        # init hidden state of decoder should take last encoding hidden state
+        state_vec = dy.vecInput(self.enc_hid_dim)
         if self.add_pred:
             init = dy.concatenate([state_vec, last_char_emb])
         else:
@@ -204,17 +219,3 @@ class AttentionNetwork(EncoderDecoderNetwork):
             yield self._output_softmax(s.output())
             last_char = yield
             last_char_emb = self.lookup[last_char]
-
-    def log_checkpoint(self, idx, train_loss, val_set, target,
-                       prefix='attention', plot=True, **kwargs):
-        super(AttentionNetwork, self).log_checkpoint(
-            idx, train_loss, val_set, target, **kwargs)
-        if plot:
-            import matplotlib.pyplot as plt
-            from hinton_diagram import hinton
-            pred = self.generate(target, store_weights=True)
-            fig = hinton(self.get_attention_matrix(),
-                         xlabels=list(target),
-                         ylabels=list(pred.replace(u.EOS, '')))
-            plt.savefig('./imgs/%s-%d.png' % (prefix, idx))
-            plt.close(fig)
