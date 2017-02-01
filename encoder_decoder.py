@@ -9,7 +9,7 @@ from rnn import SimpleRNNNetwork
 
 class EncoderDecoderNetwork(SimpleRNNNetwork):
     def __init__(self, depth, emb_dim, hid_dim,
-                 char2int, int2char, builder=dy.LSTMBuilder, add_pred=True):
+                 char2int, int2char, builder=dy.LSTMBuilder, add_pred=False):
         enc_depth, dec_depth = depth
         enc_hid_dim, dec_hid_dim = hid_dim
         self.enc_hid_dim = enc_hid_dim
@@ -45,7 +45,7 @@ class EncoderDecoderNetwork(SimpleRNNNetwork):
         if self.add_pred:
             return dy.concatenate([encoded, last_char_emb])
         else:
-            return dy.concatenate()
+            return encoded
 
     def make_decoder(self, in_seq, **kwargs):
         embedded = self._embed_seq(in_seq)
@@ -125,11 +125,11 @@ class AttentionNetwork(EncoderDecoderNetwork):
         """
         Parameters:
         -----------
-        enc_h_ts_mat: dynet.Expression,
+        enc_h_ts_mat: dynet.Expression, (seq_len x enc_hid_dim)
             matrix of encoding hidden state column vectors
-        dec_h_t: dynet.RNNState,
+        dec_h_t: dynet.RNNState, (dec_hid_dim)
             current decoder hidden state
-        encatt: dynet.Expression,
+        encatt: dynet.Expression, (seq_len x att_dim)
             projection of the encoder hidden states into the attention space
         store_weights: bool,
             whether to store attention weights
@@ -141,6 +141,7 @@ class AttentionNetwork(EncoderDecoderNetwork):
         decatt = dec2att * dec_h_t.output()
         # projection vector att_v
         # unnormalized var-len alignment vector (with len == source seq len)
+        # (seq_len)
         unnormalized_weights = att_v * dy.tanh(dy.colwise_add(encatt, decatt))
         weights = dy.softmax(dy.transpose(unnormalized_weights))
         if store_weights:
